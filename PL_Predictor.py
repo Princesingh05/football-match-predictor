@@ -18,10 +18,10 @@ from sklearn.ensemble import RandomForestClassifier ##importing machine learning
 rf = RandomForestClassifier(n_estimators = 100, min_samples_split=10, random_state=1)
 train = matches[matches["date"] < '2022-01-01'] 
 test = matches[matches["date"] > '2022-01-01']
-predictors = ["h/a", "opp", "hour", "day"]
-rf.fit(train[predictors], train["target"])
+basic_predictors = ["h/a", "opp", "hour", "day"]
+rf.fit(train[basic_predictors], train["target"])
 RandomForestClassifier(min_samples_split = 10, n_estimators = 100, random_state = 1)
-preds = rf.predict(test[predictors]) ##making prediction
+preds = rf.predict(test[basic_predictors]) ##making prediction
 
 from sklearn.metrics import accuracy_score
 acc = accuracy_score(test["target"], preds) ## testing accuracy
@@ -61,7 +61,7 @@ def make_predictions(data, predictors): ## making the predictions
     precision = precision_score(test["target"], preds)
     return combined, precision ## returning the values for the prediction
 
-combined, precision = make_predictions(matches_rolling, predictors + new_cols)
+combined, precision = make_predictions(matches_rolling, basic_predictors + new_cols)
 
 precision
 
@@ -88,6 +88,26 @@ combined
 
 merged = combined.merge(combined, left_on=["date", "new_team"], right_on=["date", "opponent"]) ## finding both the home and away team predictions and merging them 
 merged
+# Sample Prediction
+from sklearn.linear_model import LinearRegression
 
+team1 = "Chelsea"
+team2 = "Arsenal"
 
-## project inspired by dataquest tutorial 
+team1_data = matches_rolling[matches_rolling["team"] == team1].iloc[-1:]
+team2_data = matches_rolling[matches_rolling["team"] == team2].iloc[-1:]
+
+predictors = ["h/a", "opp", "hour", "day", 
+              "gf_rolling", "ga_rolling", "sh_rolling", 
+              "sot_rolling", "dist_rolling", "fk_rolling", 
+              "pk_rolling", "pkatt_rolling"]
+
+model = LinearRegression()
+model.fit(matches_rolling[predictors], matches_rolling["gf"])
+
+team1_goals = model.predict(team1_data[predictors])[0]
+team2_goals = model.predict(team2_data[predictors])[0]
+
+print(f"\nPrediction:\n{team1} vs {team2} → {int(team1_goals)} : {int(team2_goals)}")
+print("✅ Script executed successfully!")
+
